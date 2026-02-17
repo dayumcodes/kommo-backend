@@ -21,9 +21,17 @@ app.post("/kommo-webhook", async (req, res) => {
   }
 
   // 3️⃣ Process message
-  const userMessage = data?.message || "No message received";
+//   const userMessage = data?.message || "No message received";
 
-  const reply = `You said: ${userMessage}`;
+//   const reply = `You said: ${userMessage}`;
+const userMessage = (data?.message || "No message received").trim().toLowerCase();
+
+let reply;
+if (userMessage === "hello" || userMessage === "hi" || userMessage === "hey") {
+  reply = "Hello! How can I help you?";
+} else {
+  reply = `You said: ${data?.message || userMessage}`;
+}
 
   // 4️⃣ Resume Salesbot
   try {
