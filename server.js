@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const app = express();
 app.use(express.json());
+app.use(express.static("public"));
 
 app.post("/kommo-webhook", async (req, res) => {
   const { token, data, return_url } = req.body;
