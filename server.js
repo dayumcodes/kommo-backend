@@ -38,7 +38,8 @@ app.post("/kommo-webhook", async (req, res) => {
     jwt.verify(token, process.env.KOMMO_SECRET_KEY);
     console.log("[webhook] Token valid");
   } catch (err) {
-    console.log("[webhook] Invalid token");
+    const decoded = (typeof token === "string" && token.length > 0) ? (() => { try { return jwt.decode(token); } catch (_) { return null; } })() : null;
+    console.log("[webhook] Invalid token:", err.message, decoded ? "| decoded payload keys: " + Object.keys(decoded).join(", ") : "");
     return;
   }
 
