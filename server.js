@@ -5,13 +5,22 @@ require("dotenv").config();
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 app.post("/kommo-webhook", async (req, res) => {
   const { token, data, return_url } = req.body;
 
   const incomingMessage = data?.message ?? "(no message)";
-  console.log("[webhook] Request received, message:", incomingMessage, "return_url:", return_url ? "present" : "missing");
+  const hasReturnUrl = !!return_url;
+  const hasToken = !!token;
+
+  console.log("[webhook] Request received, message:", incomingMessage, "return_url:", hasReturnUrl ? "present" : "missing");
+
+  // Debug: log when payload is not the Salesbot widget_request format (helps find wrong webhook source)
+  if (!hasReturnUrl || !hasToken || incomingMessage === "(no message)") {
+    console.log("[webhook] DEBUG: Unexpected payload. Content-Type:", req.get("content-type"), "| body keys:", req.body && Object.keys(req.body).join(", ") || "none", "| body sample:", JSON.stringify(req.body).slice(0, 200));
+  }
 
   // 1️⃣ Respond immediately (IMPORTANT)
   res.sendStatus(200);
