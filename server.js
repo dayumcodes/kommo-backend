@@ -34,8 +34,9 @@ app.post("/kommo-webhook", async (req, res) => {
   }
 
   // 2️⃣ Verify JWT (signed with integration Secret key per Kommo docs)
+  // clockTolerance: allow small server clock skew (fixes "jwt not active" when nbf is ahead of our clock)
   try {
-    jwt.verify(token, process.env.KOMMO_SECRET_KEY);
+    jwt.verify(token, process.env.KOMMO_SECRET_KEY, { clockTolerance: 30 });
     console.log("[webhook] Token valid");
   } catch (err) {
     const decoded = (typeof token === "string" && token.length > 0) ? (() => { try { return jwt.decode(token); } catch (_) { return null; } })() : null;
