@@ -33,22 +33,30 @@ if (userMessage === "hello" || userMessage === "hi" || userMessage === "hey") {
   reply = `You said: ${data?.message || userMessage}`;
 }
 
-  // 4️⃣ Resume Salesbot
+// Ensure Kommo always gets non-empty body content (fixes "no body content" error)
+reply = (reply && String(reply).trim()) || "How can I help you today?";
+
+  // 4️⃣ Resume Salesbot (only if return_url was provided)
+  if (!return_url) {
+    console.log("No return_url, skipping Kommo callback");
+    return;
+  }
   try {
+    const payload = {
+      data: { message: reply },
+      execute_handlers: [
+        {
+          handler: "show",
+          params: {
+            type: "text",
+            value: reply
+          }
+        }
+      ]
+    };
     await axios.post(
       return_url,
-      {
-        data: { message: reply },
-        execute_handlers: [
-          {
-            handler: "show",
-            params: {
-              type: "text",
-              value: reply
-            }
-          }
-        ]
-      },
+      payload,
       {
         headers: {
           Authorization: `Bearer ${process.env.KOMMO_LONG_LIVED_TOKEN}`
@@ -56,7 +64,7 @@ if (userMessage === "hello" || userMessage === "hi" || userMessage === "hey") {
       }
     );
   } catch (err) {
-    console.log("Error sending response to Kommo");
+    console.log("Error sending response to Kommo:", err.response?.data || err.message);
   }
 });
 
