@@ -11,21 +11,29 @@ app.use(express.static("public"));
 app.post("/kommo-webhook", async (req, res) => {
   const { token, data, return_url } = req.body;
 
-  const incomingMessage = data?.message ?? "(no message)";
+  const incomingMessage = typeof data?.message === "string" ? data.message.trim() : "";
+  const hasMessage = incomingMessage.length > 0;
   const hasReturnUrl = !!return_url;
   const hasToken = !!token;
 
-  console.log("[webhook] Request received, message:", incomingMessage, "return_url:", hasReturnUrl ? "present" : "missing");
+  console.log("[webhook] Request received, message:", hasMessage ? incomingMessage : "(empty)", "return_url:", hasReturnUrl ? "present" : "missing");
 
-  // Debug: log when payload is not the Salesbot widget_request format (helps find wrong webhook source)
-  if (!hasReturnUrl || !hasToken || incomingMessage === "(no message)") {
-    console.log("[webhook] DEBUG: Unexpected payload. Content-Type:", req.get("content-type"), "| body keys:", req.body && Object.keys(req.body).join(", ") || "none", "| body sample:", JSON.stringify(req.body).slice(0, 200));
-  }
-
-  // 1️⃣ Respond immediately (IMPORTANT)
+  // 1️⃣ Respond immediately (IMPORTANT) — Kommo requires 200 within 2 seconds
   res.sendStatus(200);
 
-  // 2️⃣ Verify JWT
+  // Skip processing if no message — likely a different Kommo trigger (e.g. another bot), not widget_request
+  if (!hasMessage) {
+    console.log("[webhook] Skipping: no message in payload (not a widget_request?)");
+    return;
+  }
+
+  // Debug: log when payload looks wrong (missing return_url or token)
+  if (!hasReturnUrl || !hasToken) {
+    console.log("[webhook] DEBUG: Missing return_url or token. body keys:", req.body && Object.keys(req.body).join(", ") || "none");
+    return;
+  }
+
+  // 2️⃣ Verify JWT (signed with integration Secret key per Kommo docs)
   try {
     jwt.verify(token, process.env.KOMMO_SECRET_KEY);
     console.log("[webhook] Token valid");

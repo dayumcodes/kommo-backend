@@ -2,10 +2,12 @@
 
 ## What you're seeing
 
-- `[webhook] Request received, message: (no message) return_url: missing`
+- `[webhook] Request received, message: (no message)` or `message: (empty)` with `return_url: present`
 - `[webhook] Invalid token`
 
-So something is calling your `/kommo-webhook` URL, but **not** with the payload that the Salesbot **widget_request** sends.
+Or a mix: sometimes `message: hello` + Token valid (works), sometimes empty message + Invalid token (fails).
+
+So **two different sources** hit your webhook: (1) the Salesbot **widget_request** (correct payload: message + token + return_url), and (2) another trigger that sends empty message and/or wrong token. The backend now **skips** empty-message requests and returns 200 without verifying token, so you no longer see "Invalid token" for those.
 
 ---
 
